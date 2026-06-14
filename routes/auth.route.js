@@ -1,9 +1,9 @@
-import express from 'express';
+import { Router} from 'express';
 import { login, register } from '../controllers/auth.controller.js';
 import { body } from 'express-validator';
 import { validationResultExpress } from '../middlewares/validationResultExpress.js';
 
-const router = express.Router();
+const router = Router();
 
 router.post(
     '/register',
@@ -12,7 +12,7 @@ router.post(
             .trim()
             .isEmail()
             .normalizeEmail(),
-        body('password', "ínimo 6 caracteres")
+        body('password', "Mínimo 6 caracteres")
             .trim()
             .isLength({min: 6}),
         body('password', "Formato de password incorrecto")
@@ -34,11 +34,11 @@ router.post(
             .trim()
             .isEmail()
             .normalizeEmail(),
-    body('password', "ínimo 6 caracteres")
+        body('password', "Mínimo 6 caracteres")
             .trim()
             .isLength({min: 6})
     ],
-    validationResultExpress, 
+    validationResultExpress,
     login
 );
 
