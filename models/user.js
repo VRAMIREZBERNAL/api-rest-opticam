@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
         trim: true,
         unique: true,
         lowercase: true,
-        index: {unique: true},
+        index: { unique: true },
     },
     password: {
         type: String,
@@ -16,19 +16,22 @@ const userSchema = new mongoose.Schema({
     },
 });
 
-userSchema.pre("save", async function (next){
+userSchema.pre("save", async function(next) {
     const user = this;
 
-    if(!user.isModified("password")) return next();
+    if (!user.isModified("password")) return next();
 
     try {
-        const salt = await bcryptjs.hash(10)
-        user.password = await bcryptjs.hash(user.password, salt)
-        next();
+        const salt = await bcryptjs.genSalt(10);
+        user.password = await bcryptjs.hash(user.password, salt);
     } catch (error) {
         console.log(error);
         throw new Error("Error hashing the password");
     }
 });
 
-export const User = mongoose.model('User', userSchema);
+userSchema.methods.comparePassword = async function(candidatePassword) {
+    return await bcryptjs.compare(candidatePassword, this.password)
+};
+
+export const User = mongoose.model("User", userSchema);

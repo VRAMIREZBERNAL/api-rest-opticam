@@ -1,19 +1,48 @@
 import { User } from "../models/User.js";
+import jwt from "jsonwebtoken";
 
 export const register = async(req, res) => {
     const { email, password } = req.body;
+    
     try {
-        const user = new User({ email, password });
+
+        //alternativa buscando por email
+        let user = await User.findOne({ email });
+        if (user) throw { code: 11000 };
+
+    
+        user = new User({ email, password });
         await user.save();
 
-        // jwt token
+        //Generar jwt token
 
-        return res.json({ok: true});
+        return res.status(201).json({ok: true});
     } catch (error) {
         console.log(error);
+        //alternativa por defecto mongoose
+        if (error.code === 11000) {
+            return res.status(400).json({ error: "Ya existe este usuario" });
+        }
+        return res.status(500).json({error: "Error de servidor"})
     }
 };
 
 export const login = async(req, res) => {
-    res.json({ok: "login successful"})
-};
+    try {
+        const { email, password } = req.body;
+
+        let user = await User.findOne({ email });
+        if (!user) return res.status(403).json({ error: "Usuario no encontrado" });
+
+        const respuestaPassword = await user.comparePassword(password);
+        if (!respuestaPassword) return res.status(403).json({error: "Contraseña incorrecta"})
+
+        // Generar JWT token
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET);
+
+        return res.json({ token });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({error: "Error de servidor"})
+    };
+}
