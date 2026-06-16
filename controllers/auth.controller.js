@@ -1,5 +1,6 @@
 import { User } from "../models/User.js";
-import { generateToken } from "../utils/tokenManager.js";
+import jwt from "jsonwebtoken";
+import { generateRefreshToken, generateToken } from "../utils/tokenManager.js";
 
 export const register = async(req, res) => {
     const { email, password } = req.body;
@@ -39,10 +40,46 @@ export const login = async(req, res) => {
 
         // Generar JWT token
         const { token, expiresIn } = generateToken(user.id);
+        generateRefreshToken(user.id, res);
 
         return res.json({ token, expiresIn });
     } catch (error) {
         console.log(error);
         return res.status(500).json({error: "Error de servidor"})
     };
+};
+
+export const infoUser = async(req, res) => {
+    try {
+        const user = await User.findById(req.id).lean();
+        return res.json({ email: user.email, id: user.id });
+    } catch (error) {
+        return res.status(500).json({error: "Error de servidor"});
+
+    }
+    
+}
+export const refreshToken = (req, res) => {
+    try {
+        const refreshTokenCookie = req.cookies.refreshToken // Lee la cookie guardada
+        if(!refreshTokenCookie) throw new Error("No existe el token");
+
+        const {id} = jwt.verify(refreshTokenCookie, process.env.JWT_REFRESH); // se verifica junto a la JWT refresh
+
+        const { token, expiresIn } = generateToken(id); // se genera un nuevo token de seguridad
+        return res.json({token, expiresIn}); // se devuelve a la lista como peticion
+
+    } catch (error) {
+        console.log(error.message);
+
+        const tokenVerificationErrors = {
+            "invalid signature": "La firma del JWT no es válida",
+            "jwt expired": "El JWT ha expirado",
+            "invalid token": "El JWT no es válido",
+            "No Bearer": "El formato del token es incorrecto, debe ser Bearer [token]",
+            "jwt malformed": "JWT formato no valido"
+        };
+        return res.status(401).json({error: tokenVerificationErrors[error.message]});
+        
+    }
 }

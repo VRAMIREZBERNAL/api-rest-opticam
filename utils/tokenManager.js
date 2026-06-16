@@ -9,4 +9,19 @@ export const generateToken = (id) => {
     } catch (error) {
         console.log(error);
     }
+};
+
+export const generateRefreshToken = (id, res) => {
+    const expiresIn = 60 * 60 * 24 * 30;
+    try {
+        const refreshToken = jwt.sign({id}, process.env.JWT_REFRESH, {expiresIn})
+        
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: !(process.env.MODO === "developer"),
+            expires: new Date(Date.now() + expiresIn * 1000)
+        });
+    } catch (error) {
+        console.log(error)
+    }
 }

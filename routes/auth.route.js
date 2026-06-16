@@ -1,7 +1,8 @@
 import { Router} from 'express';
-import { login, register } from '../controllers/auth.controller.js';
+import { infoUser, login, refreshToken, register } from '../controllers/auth.controller.js';
 import { body } from 'express-validator';
 import { validationResultExpress } from '../middlewares/validationResultExpress.js';
+import { requiereToken } from '../middlewares/requiereToken.js';
 
 const router = Router();
 
@@ -41,5 +42,7 @@ router.post(
     validationResultExpress,
     login
 );
+router.get('/protected', requiereToken, infoUser);
+router.get('/refresh', refreshToken)
 
 export default router;
